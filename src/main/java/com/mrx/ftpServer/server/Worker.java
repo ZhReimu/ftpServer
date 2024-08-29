@@ -66,13 +66,19 @@ public class Worker implements Runnable {
             sendMsgToClient("220 Welcome to the COMP4621 FTP-Server");
             // Get new command from client
             while (!quitCommandLoop) {
-                commandEngine.executeCommand(controlIn.readLine());
+                String line = controlIn.readLine();
+                // while client closed connection, we also clean worker
+                if (line == null) {
+                    break;
+                }
+                commandEngine.executeCommand(line);
             }
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         } finally {
             // Clean up
             try {
+                Context.clear();
                 controlIn.close();
                 controlOutWriter.close();
                 controlSocket.close();

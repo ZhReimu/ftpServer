@@ -71,6 +71,10 @@ public enum Context {
         return (T) getContext().get(key);
     }
 
+    public static void clear() {
+        context.remove();
+    }
+
     private static Map<Context, Object> getContext() {
         Map<Context, Object> holder = context.get();
         if (holder == null) {
