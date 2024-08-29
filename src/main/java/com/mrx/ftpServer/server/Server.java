@@ -1,4 +1,7 @@
-package com.mrx.ftpServer;
+package com.mrx.ftpServer.server;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -12,53 +15,40 @@ import java.net.Socket;
  */
 public class Server {
 
-    private int controlPort = 1025;
     private ServerSocket welcomeSocket;
-    boolean serverRunning = true;
 
-    public Server() {
+    private static final Logger logger = LoggerFactory.getLogger(Server.class);
+
+    public Server(int controlPort) {
         try {
             welcomeSocket = new ServerSocket(controlPort);
         } catch (IOException e) {
-            System.out.println("Could not create server socket");
+            logger.error("Could not create server socket", e);
             System.exit(-1);
         }
-
-        System.out.println("FTP Server started listening on port " + controlPort);
-
+        logger.info("FTP Server started listening on port {}", controlPort);
         int noOfThreads = 0;
-
-        while (serverRunning) {
-
+        while (true) {
             try {
-
                 Socket client = welcomeSocket.accept();
-
                 // Port for incoming dataConnection (for passive mode) is the controlPort +
                 // number of created threads + 1
-                int dataPort = controlPort + noOfThreads + 1;
-
+                int dataPort = controlPort + noOfThreads++ + 1;
                 // Create new worker thread for new connection
                 Worker w = new Worker(client, dataPort);
-
-                System.out.println("New connection received. Worker was created.");
-                noOfThreads++;
+                logger.info("New connection received. Worker was created.");
                 w.start();
             } catch (IOException e) {
-                System.out.println("Exception encountered on accept");
-                e.printStackTrace();
+                logger.warn("Exception encountered on accept", e);
             }
-
         }
-
-        try {
-            welcomeSocket.close();
-            System.out.println("Server was stopped");
-        } catch (IOException e) {
-            System.out.println("Problem stopping server");
-            System.exit(-1);
-        }
-
+//        try {
+//            welcomeSocket.close();
+//            logger.info("Server was stopped");
+//        } catch (IOException e) {
+//            logger.warn("Problem stopping server", e);
+//            System.exit(-1);
+//        }
     }
 
 }
