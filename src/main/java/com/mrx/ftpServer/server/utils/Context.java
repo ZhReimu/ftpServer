@@ -3,6 +3,7 @@ package com.mrx.ftpServer.server.utils;
 import com.mrx.ftpServer.server.enums.TransferType;
 import com.mrx.ftpServer.server.enums.UserStatus;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -36,6 +37,10 @@ public enum Context {
      * transfer mode
      */
     TRANSFER_MODE,
+    /**
+     * encoding
+     */
+    ENCODING,
     ;
 
     private static final ThreadLocal<Map<Context, Object>> context = new ThreadLocal<>();
@@ -48,6 +53,7 @@ public enum Context {
         Context.TRANSFER_MODE.set(TransferType.ASCII);
         // user properly logged in?
         Context.USER_STATUS.set(UserStatus.NOT_LOGGED_IN);
+        Context.ENCODING.set(StandardCharsets.UTF_8);
     }
 
     public <T> T get() {

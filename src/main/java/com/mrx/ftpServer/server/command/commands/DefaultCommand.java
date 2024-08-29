@@ -1,6 +1,8 @@
 package com.mrx.ftpServer.server.command.commands;
 
 import com.mrx.ftpServer.server.command.BaseCommand;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 
@@ -12,8 +14,11 @@ import java.util.Set;
  */
 public class DefaultCommand extends BaseCommand {
 
+    private static final Logger logger = LoggerFactory.getLogger(DefaultCommand.class);
+
     @Override
     public void execute(String args) {
+        logger.warn("unknown command: {}", args);
         sendMsgToClient("501 Unknown command");
     }
 

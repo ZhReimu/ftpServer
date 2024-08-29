@@ -16,3 +16,4 @@ com.mrx.ftpServer.server.command.commands.SystCommand
 com.mrx.ftpServer.server.command.commands.TypeCommand
 com.mrx.ftpServer.server.command.commands.UserCommand
 com.mrx.ftpServer.server.command.commands.StorCommand
+com.mrx.ftpServer.server.command.commands.OptsCommand
