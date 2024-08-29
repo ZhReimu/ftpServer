@@ -25,7 +25,7 @@ public class RetrCommand extends BaseCommand {
      * @param file The file to transfer to the user
      */
     @Override
-    public void execute(String file) {
+    public void execute0(String file) {
         String currDirectory = Context.CURRENT_DIR.get();
         String fileSeparator = Context.FILE_SEPARATOR.get();
         Socket dataConnection = worker.getDataConnection();

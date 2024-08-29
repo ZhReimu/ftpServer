@@ -2,6 +2,9 @@ package com.mrx.ftpServer.server.command;
 
 import com.mrx.ftpServer.server.Worker;
 import com.mrx.ftpServer.server.service.UserService;
+import com.mrx.ftpServer.server.utils.Context;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 import java.util.Set;
@@ -16,11 +19,20 @@ public abstract class BaseCommand {
 
     protected UserService userService;
 
+    protected final Logger logger = LoggerFactory.getLogger(getClass());
+
     public boolean support(String command) {
         return getCommand().stream().anyMatch(it -> it.equalsIgnoreCase(command));
     }
 
-    public abstract void execute(String args);
+    public void execute(String args) {
+        String command = Context.CURRENT_COMMAND.getAsString();
+        logger.debug("executing command: {}, args: {}", command, args);
+        execute0(args);
+        logger.debug("execute command: {} completed", command);
+    }
+
+    protected abstract void execute0(String args);
 
     /**
      * which supported command

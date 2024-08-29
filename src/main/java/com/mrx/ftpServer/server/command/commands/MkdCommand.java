@@ -23,7 +23,7 @@ public class MkdCommand extends BaseCommand {
      * @param args Directory name
      */
     @Override
-    public void execute(String args) {
+    public void execute0(String args) {
         // Allow only alphanumeric characters
         if (args != null && args.matches("^[a-zA-Z0-9]+$")) {
             File dir = new File(Context.CURRENT_DIR.getAsString() + Context.FILE_SEPARATOR.get() + args);

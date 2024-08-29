@@ -3,6 +3,7 @@ package com.mrx.ftpServer.server;
 import com.mrx.ftpServer.server.command.BaseCommand;
 import com.mrx.ftpServer.server.command.commands.DefaultCommand;
 import com.mrx.ftpServer.server.service.UserService;
+import com.mrx.ftpServer.server.utils.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +44,7 @@ public class CommandEngine {
         String command = ((index == -1) ? c.toUpperCase() : (c.substring(0, index)).toUpperCase());
         String args = ((index == -1) ? null : c.substring(index + 1));
         logger.debug("Command: {} Args: {}", command, args);
+        Context.CURRENT_COMMAND.set(command);
         // dispatcher mechanism for different commands
         BaseCommand cmd = commands.stream().filter(it -> it.support(command)).findFirst().orElse(defaultCommand);
         logger.debug("dispatched to {}", cmd);

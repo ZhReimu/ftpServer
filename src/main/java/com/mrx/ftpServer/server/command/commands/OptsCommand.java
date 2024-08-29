@@ -15,7 +15,7 @@ import java.util.Set;
 public class OptsCommand extends BaseCommand {
 
     @Override
-    public void execute(String args) {
+    public void execute0(String args) {
         String[] split = args.split(" ");
         String encode = split[0];
         String operate = split[1];

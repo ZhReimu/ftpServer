@@ -16,7 +16,7 @@ import java.util.Set;
 public class UserCommand extends BaseCommand {
 
     @Override
-    public void execute(String username) {
+    public void execute0(String username) {
         for (User user : userService.loadUsers()) {
             if (username.toLowerCase().equals(user.getUsername())) {
                 if (user.getPassword() == null) {

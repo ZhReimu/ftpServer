@@ -15,7 +15,7 @@ import java.util.Set;
 public class CwdCommand extends BaseCommand {
 
     @Override
-    public void execute(String args) {
+    public void execute0(String args) {
         String filename = Context.CURRENT_DIR.get();
         Context fileSeparator = Context.FILE_SEPARATOR;
         // go one level up (cd ..)

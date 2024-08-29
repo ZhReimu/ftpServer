@@ -18,7 +18,7 @@ public class RmdCommand extends BaseCommand {
      * @param dir directory to be deleted.
      */
     @Override
-    public void execute(String dir) {
+    public void execute0(String dir) {
         String filename = Context.CURRENT_DIR.get();
         // only alphanumeric folder names are allowed
         if (dir != null && dir.matches("^[a-zA-Z0-9]+$")) {

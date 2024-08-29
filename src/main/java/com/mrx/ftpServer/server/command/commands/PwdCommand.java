@@ -15,7 +15,7 @@ import java.util.Set;
 public class PwdCommand extends BaseCommand {
 
     @Override
-    public void execute(String args) {
+    public void execute0(String args) {
         sendMsgToClient("257 \"" + Context.CURRENT_DIR.get() + "\"");
     }
 

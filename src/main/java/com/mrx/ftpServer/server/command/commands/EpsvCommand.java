@@ -15,7 +15,7 @@ import java.util.Set;
 public class EpsvCommand extends BaseCommand {
 
     @Override
-    public void execute(String args) {
+    public void execute0(String args) {
         int dataPort = worker.getDataPort();
         sendMsgToClient("229 Entering Extended Passive Mode (|||" + dataPort + "|)");
         worker.openDataConnectionPassive(dataPort);

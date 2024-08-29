@@ -19,7 +19,7 @@ public class EprtCommand extends BaseCommand {
      *             version, the IP address and the port number
      */
     @Override
-    public void execute(String args) {
+    public void execute0(String args) {
         final String IPV4 = "1";
         final String IPV6 = "2";
         // Example arg: |2|::1|58770| or |1|132.235.1.2|6275|

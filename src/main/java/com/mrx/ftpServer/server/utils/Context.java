@@ -41,6 +41,10 @@ public enum Context {
      * encoding
      */
     ENCODING,
+    /**
+     * current command
+     */
+    CURRENT_COMMAND,
     ;
 
     private static final ThreadLocal<Map<Context, Object>> context = new ThreadLocal<>();

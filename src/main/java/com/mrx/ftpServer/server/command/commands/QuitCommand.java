@@ -13,7 +13,7 @@ import java.util.Set;
 public class QuitCommand extends BaseCommand {
 
     @Override
-    public void execute(String password) {
+    public void execute0(String password) {
         sendMsgToClient("221 Closing connection");
         worker.quit();
     }

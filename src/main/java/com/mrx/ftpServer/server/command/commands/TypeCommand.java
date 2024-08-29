@@ -19,7 +19,7 @@ public class TypeCommand extends BaseCommand {
      * @param mode Transfer mode: "a" for Ascii. "i" for image/binary.s
      */
     @Override
-    public void execute(String mode) {
+    public void execute0(String mode) {
         if (mode.equalsIgnoreCase("A")) {
             Context.TRANSFER_MODE.set(TransferType.ASCII);
             sendMsgToClient("200 OK");

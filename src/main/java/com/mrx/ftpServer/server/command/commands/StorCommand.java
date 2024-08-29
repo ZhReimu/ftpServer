@@ -25,7 +25,7 @@ public class StorCommand extends BaseCommand {
      * @param file The file that the user wants to store on the server
      */
     @Override
-    public void execute(String file) {
+    public void execute0(String file) {
         Socket dataConnection = worker.getDataConnection();
         if (file == null) {
             sendMsgToClient("501 No filename given");

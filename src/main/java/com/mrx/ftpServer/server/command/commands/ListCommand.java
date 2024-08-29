@@ -17,7 +17,7 @@ import java.util.Set;
 public class ListCommand extends BaseCommand {
 
     @Override
-    public void execute(String args) {
+    public void execute0(String args) {
         Socket dataConnection = worker.getDataConnection();
         if (dataConnection == null || dataConnection.isClosed()) {
             sendMsgToClient("425 No data connection was established");

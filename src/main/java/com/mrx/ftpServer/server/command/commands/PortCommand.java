@@ -20,7 +20,7 @@ public class PortCommand extends BaseCommand {
      *             seg2)
      */
     @Override
-    public void execute(String args) {
+    public void execute0(String args) {
         // Extract IP address and port number from arguments
         String[] stringSplit = args.split(",");
         String hostName = stringSplit[0] + "." + stringSplit[1] + "." + stringSplit[2] + "." + stringSplit[3];

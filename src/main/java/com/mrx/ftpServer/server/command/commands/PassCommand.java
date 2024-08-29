@@ -17,7 +17,7 @@ import java.util.Set;
 public class PassCommand extends BaseCommand {
 
     @Override
-    public void execute(String password) {
+    public void execute0(String password) {
         User user = Context.USER.get();
         // User has entered a valid username and password is correct
         UserStatus userStatus = Context.USER_STATUS.get();

@@ -13,7 +13,7 @@ import java.util.Set;
 public class SystCommand extends BaseCommand {
 
     @Override
-    public void execute(String args) {
+    public void execute0(String args) {
         sendMsgToClient("215 COMP4621 FTP Server Homebrew");
     }
 

@@ -15,7 +15,7 @@ import java.util.Set;
 public class PasvCommand extends BaseCommand {
 
     @Override
-    public void execute(String args) {
+    public void execute0(String args) {
         // Using fixed IP for connections on the same machine
         // For usage on separate hosts, we'd need to get the local IP address from
         // somewhere

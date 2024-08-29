@@ -17,7 +17,7 @@ public class DefaultCommand extends BaseCommand {
     private static final Logger logger = LoggerFactory.getLogger(DefaultCommand.class);
 
     @Override
-    public void execute(String args) {
+    public void execute0(String args) {
         logger.warn("unknown command: {}", args);
         sendMsgToClient("501 Unknown command");
     }
