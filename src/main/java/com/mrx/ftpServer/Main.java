@@ -9,7 +9,7 @@ import com.mrx.ftpServer.server.Server;
 public class Main {
 
     public static void main(String[] args) {
-        new Server(1025);
+        new Server("127.0.0.1", 1025);
     }
 
 }

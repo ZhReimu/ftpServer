@@ -1,11 +1,16 @@
 package com.mrx.ftpServer.server;
 
+import com.mrx.ftpServer.server.utils.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Class for an FTP server worker thread.
@@ -14,13 +19,8 @@ import java.net.Socket;
  */
 public class Worker extends Thread {
 
-    // Path information
-    private String root;
-    private String currDirectory;
-    private String fileSeparator = "/";
-
     // control connection
-    private Socket controlSocket;
+    private final Socket controlSocket;
     private PrintWriter controlOutWriter;
     private BufferedReader controlIn;
 
@@ -29,15 +29,13 @@ public class Worker extends Thread {
     private Socket dataConnection;
     private PrintWriter dataOutWriter;
 
-    private int dataPort;
-    private TransferType transferMode = TransferType.ASCII;
+    private final int dataPort;
 
-    // user properly logged in?
-    private UserStatus currentUserStatus = UserStatus.NOT_LOGGED_IN;
-    private String validUser = "comp4621";
-    private String validPassword = "network";
+    private final CommandEngine commandEngine = new CommandEngine(this);
 
-    private boolean quitCommandLoop = false;
+    private volatile boolean quitCommandLoop = false;
+
+    private static final AtomicInteger workerNo = new AtomicInteger(0);
 
     private static final Logger logger = LoggerFactory.getLogger(Worker.class);
 
@@ -50,15 +48,15 @@ public class Worker extends Thread {
     public Worker(Socket client, int dataPort) {
         this.controlSocket = client;
         this.dataPort = dataPort;
-        this.currDirectory = System.getProperty("user.dir") + "/test";
-        this.root = System.getProperty("user.dir");
+        setName("worker-" + workerNo.getAndIncrement());
     }
 
     /**
      * Run method required by Java thread model
      */
     public void run() {
-        logger.debug("Current working directory {}", this.currDirectory);
+        Context.init();
+        logger.debug("Current working directory {}", Context.CURRENT_DIR.getAsString());
         try {
             // Input from client
             controlIn = new BufferedReader(new InputStreamReader(controlSocket.getInputStream()));
@@ -68,7 +66,7 @@ public class Worker extends Thread {
             sendMsgToClient("220 Welcome to the COMP4621 FTP-Server");
             // Get new command from client
             while (!quitCommandLoop) {
-                executeCommand(controlIn.readLine());
+                commandEngine.executeCommand(controlIn.readLine());
             }
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
@@ -87,86 +85,12 @@ public class Worker extends Thread {
     }
 
     /**
-     * Main command dispatcher method. Separates the command from the arguments and
-     * dispatches it to single handler functions.
-     *
-     * @param c the raw input from the socket consisting of command and arguments
-     */
-    private void executeCommand(String c) {
-        // split command and arguments
-        int index = c.indexOf(' ');
-        String command = ((index == -1) ? c.toUpperCase() : (c.substring(0, index)).toUpperCase());
-        String args = ((index == -1) ? null : c.substring(index + 1));
-        logger.debug("Command: {} Args: {}", command, args);
-        // dispatcher mechanism for different commands
-        switch (command) {
-            case "USER":
-                handleUser(args);
-                break;
-            case "PASS":
-                handlePass(args);
-                break;
-            case "CWD":
-                handleCwd(args);
-                break;
-            case "LIST", "NLST":
-                handleNlst(args);
-                break;
-            case "PWD":
-            case "XPWD":
-                handlePwd();
-                break;
-            case "QUIT":
-                handleQuit();
-                break;
-            case "PASV":
-                handlePasv();
-                break;
-            case "EPSV":
-                handleEpsv();
-                break;
-            case "SYST":
-                handleSyst();
-                break;
-            case "FEAT":
-                handleFeat();
-                break;
-            case "PORT":
-                handlePort(args);
-                break;
-            case "EPRT":
-                handleEPort(args);
-                break;
-            case "RETR":
-                handleRetr(args);
-                break;
-            case "MKD":
-            case "XMKD":
-                handleMkd(args);
-                break;
-            case "RMD":
-            case "XRMD":
-                handleRmd(args);
-                break;
-            case "TYPE":
-                handleType(args);
-                break;
-            case "STOR":
-                handleStor(args);
-                break;
-            default:
-                sendMsgToClient("501 Unknown command");
-                break;
-        }
-    }
-
-    /**
      * Sends a message to the connected client over the control connection. Flushing
      * is automatically performed by the stream.
      *
      * @param msg The message that will be sent
      */
-    private void sendMsgToClient(String msg) {
+    public void sendMsgToClient(String msg) {
         controlOutWriter.println(msg);
     }
 
@@ -175,7 +99,7 @@ public class Worker extends Thread {
      *
      * @param msg Message to be sent
      */
-    private void sendDataMsgToClient(String msg) {
+    public void sendDataMsgToClient(String msg) {
         if (dataConnection == null || dataConnection.isClosed()) {
             sendMsgToClient("425 No data connection was established");
             logger.debug("Cannot send message, because no data connection is established");
@@ -191,7 +115,7 @@ public class Worker extends Thread {
      *
      * @param port Port on which to listen for new incoming connection
      */
-    private void openDataConnectionPassive(int port) {
+    public void openDataConnectionPassive(int port) {
         try {
             dataSocket = new ServerSocket(port);
             dataConnection = dataSocket.accept();
@@ -209,7 +133,7 @@ public class Worker extends Thread {
      * @param ipAddress Client IP address to connect to
      * @param port      Client port to connect to
      */
-    private void openDataConnectionActive(String ipAddress, int port) {
+    public void openDataConnectionActive(String ipAddress, int port) {
         try {
             dataConnection = new Socket(ipAddress, port);
             dataOutWriter = new PrintWriter(dataConnection.getOutputStream(), true);
@@ -223,7 +147,7 @@ public class Worker extends Thread {
     /**
      * Close previously established data connection sockets and streams
      */
-    private void closeDataConnection() {
+    public void closeDataConnection() {
         try {
             dataOutWriter.close();
             dataConnection.close();
@@ -239,461 +163,18 @@ public class Worker extends Thread {
         dataSocket = null;
     }
 
-    /**
-     * Handler for USER command. User identifies the client.
-     *
-     * @param username Username entered by the user
-     */
-    private void handleUser(String username) {
-        if (username.toLowerCase().equals(validUser)) {
-            sendMsgToClient("331 User name okay, need password");
-            currentUserStatus = UserStatus.ENTERED_USERNAME;
-        } else if (currentUserStatus == UserStatus.LOGGED_IN) {
-            sendMsgToClient("530 User already logged in");
-        } else {
-            sendMsgToClient("530 Not logged in");
-        }
+    public Socket getDataConnection() {
+        return dataConnection;
     }
 
     /**
-     * Handler for PASS command. PASS receives the user password and checks if it's
-     * valid.
-     *
-     * @param password Password entered by the user
+     * quit command loop
      */
-
-    private void handlePass(String password) {
-        // User has entered a valid username and password is correct
-        if (currentUserStatus == UserStatus.ENTERED_USERNAME && password.equals(validPassword)) {
-            currentUserStatus = UserStatus.LOGGED_IN;
-            sendMsgToClient("230-Welcome to HKUST");
-            sendMsgToClient("230 User logged in successfully");
-        }
-        // User is already logged in
-        else if (currentUserStatus == UserStatus.LOGGED_IN) {
-            sendMsgToClient("530 User already logged in");
-        }
-        // Wrong password
-        else {
-            sendMsgToClient("530 Not logged in");
-        }
-    }
-
-    /**
-     * Handler for CWD (change working directory) command.
-     *
-     * @param args New directory to be created
-     */
-    private void handleCwd(String args) {
-        String filename = currDirectory;
-        // go one level up (cd ..)
-        if (args.equals("..")) {
-            int ind = filename.lastIndexOf(fileSeparator);
-            if (ind > 0) {
-                filename = filename.substring(0, ind);
-            }
-        }
-        // if argument is anything else (cd . does nothing)
-        else if (!args.equals(".")) {
-            filename = filename + fileSeparator + args;
-        }
-        // check if file exists, is directory and is not above root directory
-        File f = new File(filename);
-        if (f.exists() && f.isDirectory() && (filename.length() >= root.length())) {
-            currDirectory = filename;
-            sendMsgToClient("250 The current directory has been changed to " + currDirectory);
-        } else {
-            sendMsgToClient("550 Requested action not taken. File unavailable.");
-        }
-    }
-
-    /**
-     * Handler for NLST (Named List) command. Lists the directory content in a short
-     * format (names only)
-     *
-     * @param args The directory to be listed
-     */
-    private void handleNlst(String args) {
-        if (dataConnection == null || dataConnection.isClosed()) {
-            sendMsgToClient("425 No data connection was established");
-        } else {
-            String[] dirContent = nlstHelper(args);
-            if (dirContent == null) {
-                sendMsgToClient("550 File does not exist.");
-            } else {
-                sendMsgToClient("125 Opening ASCII mode data connection for file list.");
-                for (String s : dirContent) {
-                    sendDataMsgToClient(s);
-                }
-                sendMsgToClient("226 Transfer complete.");
-                closeDataConnection();
-            }
-        }
-    }
-
-    /**
-     * A helper for the NLST command. The directory name is obtained by appending
-     * "args" to the current directory
-     *
-     * @param args The directory to list
-     * @return an array containing names of files in a directory. If the given name
-     * is that of a file, then return an array containing only one element
-     * (this name). If the file or directory does not exist, return nul.
-     */
-    private String[] nlstHelper(String args) {
-        // Construct the name of the directory to list.
-        String filename = currDirectory;
-        if (args != null) {
-            filename = filename + fileSeparator + args;
-        }
-        // Now get a File object, and see if the name we got exists and is a
-        // directory.
-        File f = new File(filename);
-        if (f.exists() && f.isDirectory()) {
-            return f.list();
-        } else if (f.exists() && f.isFile()) {
-            String[] allFiles = new String[1];
-            allFiles[0] = f.getName();
-            return allFiles;
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * Handler for the PORT command. The client issues a PORT command to the server
-     * in active mode, so the server can open a data connection to the client
-     * through the given address and port number.
-     *
-     * @param args The first four segments (separated by comma) are the IP address.
-     *             The last two segments encode the port number (port = seg1*256 +
-     *             seg2)
-     */
-    private void handlePort(String args) {
-        // Extract IP address and port number from arguments
-        String[] stringSplit = args.split(",");
-        String hostName = stringSplit[0] + "." + stringSplit[1] + "." + stringSplit[2] + "." + stringSplit[3];
-        int p = Integer.parseInt(stringSplit[4]) * 256 + Integer.parseInt(stringSplit[5]);
-        // Initiate data connection to client
-        openDataConnectionActive(hostName, p);
-        sendMsgToClient("200 Command OK");
-    }
-
-    /**
-     * Handler for the EPORT command. The client issues an EPORT command to the
-     * server in active mode, so the server can open a data connection to the client
-     * through the given address and port number.
-     *
-     * @param args This string is separated by vertical bars and encodes the IP
-     *             version, the IP address and the port number
-     */
-    private void handleEPort(String args) {
-        final String IPV4 = "1";
-        final String IPV6 = "2";
-        // Example arg: |2|::1|58770| or |1|132.235.1.2|6275|
-        String[] splitArgs = args.split("\\|");
-        String ipVersion = splitArgs[1];
-        String ipAddress = splitArgs[2];
-        if (!IPV4.equals(ipVersion) && !IPV6.equals(ipVersion)) {
-            throw new IllegalArgumentException("Unsupported IP version");
-        }
-        int port = Integer.parseInt(splitArgs[3]);
-        // Initiate data connection to client
-        openDataConnectionActive(ipAddress, port);
-        sendMsgToClient("200 Command OK");
-    }
-
-    /**
-     * Handler for PWD (Print working directory) command. Returns the path of the
-     * current directory back to the client.
-     */
-    private void handlePwd() {
-        sendMsgToClient("257 \"" + currDirectory + "\"");
-    }
-
-    /**
-     * Handler for PASV command which initiates the passive mode. In passive mode
-     * the client initiates the data connection to the server. In active mode the
-     * server initiates the data connection to the client.
-     */
-    private void handlePasv() {
-        // Using fixed IP for connections on the same machine
-        // For usage on separate hosts, we'd need to get the local IP address from
-        // somewhere
-        // Java sockets did not offer a good method for this
-        String myIp = "127.0.0.1";
-        String myIpSplit[] = myIp.split("\\.");
-        int p1 = dataPort / 256;
-        int p2 = dataPort % 256;
-        sendMsgToClient("227 Entering Passive Mode (" + myIpSplit[0] + "," + myIpSplit[1] + "," + myIpSplit[2] + ","
-                + myIpSplit[3] + "," + p1 + "," + p2 + ")");
-        openDataConnectionPassive(dataPort);
-
-    }
-
-    /**
-     * Handler for EPSV command which initiates extended passive mode. Similar to
-     * PASV but for newer clients (IPv6 support is possible but not implemented
-     * here).
-     */
-    private void handleEpsv() {
-        sendMsgToClient("229 Entering Extended Passive Mode (|||" + dataPort + "|)");
-        openDataConnectionPassive(dataPort);
-    }
-
-    /**
-     * Handler for the QUIT command.
-     */
-    private void handleQuit() {
-        sendMsgToClient("221 Closing connection");
+    public void quit() {
         quitCommandLoop = true;
     }
 
-    private void handleSyst() {
-        sendMsgToClient("215 COMP4621 FTP Server Homebrew");
+    public int getDataPort() {
+        return dataPort;
     }
-
-    /**
-     * Handler for the FEAT (features) command. Feat transmits the
-     * abilities/features of the server to the client. Needed for some ftp clients.
-     * This is just a dummy message to satisfy clients, no real feature information
-     * included.
-     */
-    private void handleFeat() {
-        sendMsgToClient("211-Extensions supported:");
-        sendMsgToClient("211 END");
-    }
-
-    /**
-     * Handler for the MKD (make directory) command. Creates a new directory on the
-     * server.
-     *
-     * @param args Directory name
-     */
-    private void handleMkd(String args) {
-        // Allow only alphanumeric characters
-        if (args != null && args.matches("^[a-zA-Z0-9]+$")) {
-            File dir = new File(currDirectory + fileSeparator + args);
-            if (!dir.mkdir()) {
-                sendMsgToClient("550 Failed to create new directory");
-                logger.debug("Failed to create new directory");
-            } else {
-                sendMsgToClient("250 Directory successfully created");
-            }
-        } else {
-            sendMsgToClient("550 Invalid name");
-        }
-    }
-
-    /**
-     * Handler for RMD (remove directory) command. Removes a directory.
-     *
-     * @param dir directory to be deleted.
-     */
-    private void handleRmd(String dir) {
-        String filename = currDirectory;
-        // only alphanumeric folder names are allowed
-        if (dir != null && dir.matches("^[a-zA-Z0-9]+$")) {
-            filename = filename + fileSeparator + dir;
-            // check if file exists, is directory
-            File d = new File(filename);
-            if (d.exists() && d.isDirectory()) {
-                d.delete();
-                sendMsgToClient("250 Directory was successfully removed");
-            } else {
-                sendMsgToClient("550 Requested action not taken. File unavailable.");
-            }
-        } else {
-            sendMsgToClient("550 Invalid file name.");
-        }
-
-    }
-
-    /**
-     * Handler for the TYPE command. The type command sets the transfer mode to
-     * either binary or ascii mode
-     *
-     * @param mode Transfer mode: "a" for Ascii. "i" for image/binary.
-     */
-    private void handleType(String mode) {
-        if (mode.equalsIgnoreCase("A")) {
-            transferMode = TransferType.ASCII;
-            sendMsgToClient("200 OK");
-        } else if (mode.equalsIgnoreCase("I")) {
-            transferMode = TransferType.BINARY;
-            sendMsgToClient("200 OK");
-        } else
-            sendMsgToClient("504 Not OK");
-    }
-
-    /**
-     * Handler for the RETR (retrieve) command. Retrieve transfers a file from the
-     * ftp server to the client.
-     *
-     * @param file The file to transfer to the user
-     */
-    private void handleRetr(String file) {
-        File f = new File(currDirectory + fileSeparator + file);
-        if (!f.exists()) {
-            sendMsgToClient("550 File does not exist");
-        } else {
-            // Binary mode
-            if (transferMode == TransferType.BINARY) {
-                BufferedOutputStream fout = null;
-                BufferedInputStream fin = null;
-                sendMsgToClient("150 Opening binary mode data connection for requested file " + f.getName());
-                try {
-                    // create streams
-                    fout = new BufferedOutputStream(dataConnection.getOutputStream());
-                    fin = new BufferedInputStream(new FileInputStream(f));
-                } catch (Exception e) {
-                    logger.debug("Could not create file streams");
-                }
-                logger.debug("Starting file transmission of {}", f.getName());
-                // write file with buffer
-                byte[] buf = new byte[1024];
-                int l = 0;
-                try {
-                    while ((l = fin.read(buf, 0, 1024)) != -1) {
-                        fout.write(buf, 0, l);
-                    }
-                } catch (IOException e) {
-                    logger.debug("Could not read from or write to file streams", e);
-                }
-                // close streams
-                try {
-                    fin.close();
-                    fout.close();
-                } catch (IOException e) {
-                    logger.debug("Could not close file streams", e);
-                }
-                logger.debug("Completed file transmission of {}", f.getName());
-                sendMsgToClient("226 File transfer successful. Closing data connection.");
-            }
-
-            // ASCII mode
-            else {
-                sendMsgToClient("150 Opening ASCII mode data connection for requested file " + f.getName());
-                BufferedReader rin = null;
-                PrintWriter rout = null;
-                try {
-                    rin = new BufferedReader(new FileReader(f));
-                    rout = new PrintWriter(dataConnection.getOutputStream(), true);
-                } catch (IOException e) {
-                    logger.debug("Could not create file streams");
-                }
-                String s;
-                try {
-                    while ((s = rin.readLine()) != null) {
-                        rout.println(s);
-                    }
-                } catch (IOException e) {
-                    logger.debug("Could not read from or write to file streams", e);
-                }
-                try {
-                    rout.close();
-                    rin.close();
-                } catch (IOException e) {
-                    logger.debug("Could not close file streams", e);
-                }
-                sendMsgToClient("226 File transfer successful. Closing data connection.");
-            }
-        }
-        closeDataConnection();
-    }
-
-    /**
-     * Handler for STOR (Store) command. Store receives a file from the client and
-     * saves it to the ftp server.
-     *
-     * @param file The file that the user wants to store on the server
-     */
-    private void handleStor(String file) {
-        if (file == null) {
-            sendMsgToClient("501 No filename given");
-        } else {
-            File f = new File(currDirectory + fileSeparator + file);
-            if (f.exists()) {
-                sendMsgToClient("550 File already exists");
-            } else {
-                // Binary mode
-                if (transferMode == TransferType.BINARY) {
-                    BufferedOutputStream fout = null;
-                    BufferedInputStream fin = null;
-                    sendMsgToClient("150 Opening binary mode data connection for requested file " + f.getName());
-                    try {
-                        // create streams
-                        fout = new BufferedOutputStream(new FileOutputStream(f));
-                        fin = new BufferedInputStream(dataConnection.getInputStream());
-                    } catch (Exception e) {
-                        logger.debug("Could not create file streams");
-                    }
-                    logger.debug("Start receiving file {}", f.getName());
-                    // write file with buffer
-                    byte[] buf = new byte[1024];
-                    int l = 0;
-                    try {
-                        while ((l = fin.read(buf, 0, 1024)) != -1) {
-                            fout.write(buf, 0, l);
-                        }
-                    } catch (IOException e) {
-                        logger.debug("Could not read from or write to file streams", e);
-                    }
-                    // close streams
-                    try {
-                        fin.close();
-                        fout.close();
-                    } catch (IOException e) {
-                        logger.debug("Could not close file streams", e);
-                    }
-                    logger.debug("Completed receiving file {}", f.getName());
-                    sendMsgToClient("226 File transfer successful. Closing data connection.");
-                }
-                // ASCII mode
-                else {
-                    sendMsgToClient("150 Opening ASCII mode data connection for requested file " + f.getName());
-                    BufferedReader rin = null;
-                    PrintWriter rout = null;
-                    try {
-                        rin = new BufferedReader(new InputStreamReader(dataConnection.getInputStream()));
-                        rout = new PrintWriter(new FileOutputStream(f), true);
-                    } catch (IOException e) {
-                        logger.debug("Could not create file streams");
-                    }
-                    String s;
-                    try {
-                        while ((s = rin.readLine()) != null) {
-                            rout.println(s);
-                        }
-                    } catch (IOException e) {
-                        logger.debug("Could not read from or write to file streams", e);
-                    }
-                    try {
-                        rout.close();
-                        rin.close();
-                    } catch (IOException e) {
-                        logger.debug("Could not close file streams", e);
-                    }
-                    sendMsgToClient("226 File transfer successful. Closing data connection.");
-                }
-            }
-            closeDataConnection();
-        }
-
-    }
-
-    /**
-     * Indicating the last set transfer type
-     */
-    private enum TransferType {
-        ASCII, BINARY
-    }
-
-    /**
-     * Indicates the authentication status of a user
-     */
-    private enum UserStatus {
-        NOT_LOGGED_IN, ENTERED_USERNAME, LOGGED_IN
-    }
-
 }

@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -19,9 +20,9 @@ public class Server {
 
     private static final Logger logger = LoggerFactory.getLogger(Server.class);
 
-    public Server(int controlPort) {
+    public Server(String hostName, int controlPort) {
         try {
-            welcomeSocket = new ServerSocket(controlPort);
+            welcomeSocket = new ServerSocket(controlPort, 0, new InetSocketAddress(hostName, controlPort).getAddress());
         } catch (IOException e) {
             logger.error("Could not create server socket", e);
             System.exit(-1);
