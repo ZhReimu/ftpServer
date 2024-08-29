@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @author Moritz Stueckler (SID 20414726)
  */
-public class Worker extends Thread {
+public class Worker implements Runnable {
 
     // control connection
     private final Socket controlSocket;
@@ -48,7 +48,6 @@ public class Worker extends Thread {
     public Worker(Socket client, int dataPort) {
         this.controlSocket = client;
         this.dataPort = dataPort;
-        setName("worker-" + workerNo.getAndIncrement());
     }
 
     /**
@@ -56,6 +55,7 @@ public class Worker extends Thread {
      */
     public void run() {
         Context.init();
+        Thread.currentThread().setName("worker-" + workerNo.getAndIncrement());
         logger.debug("Current working directory {}", Context.CURRENT_DIR.getAsString());
         try {
             // Input from client
