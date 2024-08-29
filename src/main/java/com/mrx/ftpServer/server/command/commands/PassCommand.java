@@ -18,7 +18,7 @@ public class PassCommand extends BaseCommand {
 
     @Override
     public void execute(String password) {
-        User user = userService.loadUsers().getFirst();
+        User user = Context.USER.get();
         // User has entered a valid username and password is correct
         UserStatus userStatus = Context.USER_STATUS.get();
         if (userStatus == UserStatus.ENTERED_USERNAME && password.equals(user.getPassword())) {
