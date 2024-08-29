@@ -97,6 +97,7 @@ public class Worker implements Runnable {
      * @param msg The message that will be sent
      */
     public void sendMsgToClient(String msg) {
+        logger.debug("write: {}", msg);
         controlOutWriter.println(msg);
     }
 

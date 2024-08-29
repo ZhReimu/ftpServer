@@ -13,7 +13,8 @@ public class UserService {
     public List<User> loadUsers() {
         User u1 = User.of("comp4621", "network");
         User u2 = User.of("root", "root");
-        return List.of(u2, u1);
+        User u3 = User.of("anonymous", null);
+        return List.of(u2, u1, u3);
     }
 
 }

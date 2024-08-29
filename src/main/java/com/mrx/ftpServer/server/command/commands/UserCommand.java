@@ -19,6 +19,12 @@ public class UserCommand extends BaseCommand {
     public void execute(String username) {
         for (User user : userService.loadUsers()) {
             if (username.toLowerCase().equals(user.getUsername())) {
+                if (user.getPassword() == null) {
+                    Context.USER_STATUS.set(UserStatus.LOGGED_IN);
+                    sendMsgToClient("230-Welcome to HKUST");
+                    sendMsgToClient("230 User logged in successfully");
+                    return;
+                }
                 sendMsgToClient("331 User name okay, need password");
                 Context.put(Context.USER_STATUS, UserStatus.ENTERED_USERNAME);
                 Context.USER.set(user);
