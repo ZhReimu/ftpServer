@@ -30,7 +30,8 @@ public class StorCommand extends BaseCommand {
         if (file == null) {
             sendMsgToClient("501 No filename given");
         } else {
-            File f = new File(Context.CURRENT_DIR.getAsString() + Context.FILE_SEPARATOR.get() + file);
+            String fileName = Context.CURRENT_DIR.getAsString() + Context.FILE_SEPARATOR.get() + file;
+            File f = Context.getRelativeFile(fileName);
             if (f.exists()) {
                 sendMsgToClient("550 File already exists");
             } else {
