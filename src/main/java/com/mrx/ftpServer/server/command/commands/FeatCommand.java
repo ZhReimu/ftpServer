@@ -39,6 +39,6 @@ public class FeatCommand extends BaseCommand {
 
     @Override
     protected Set<String> getCommand() {
-        return Set.of("CWD");
+        return Set.of("FEAT");
     }
 }
