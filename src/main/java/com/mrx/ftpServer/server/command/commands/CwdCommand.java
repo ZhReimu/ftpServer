@@ -17,6 +17,11 @@ public class CwdCommand extends BaseCommand {
     @Override
     public void execute0(String args) {
         String filename = Context.CURRENT_DIR.get();
+        // fix windows explorer bug
+        if (filename.equals(args)) {
+            sendMsgToClient("250 The current directory has been changed to " + filename);
+            return;
+        }
         Context fileSeparator = Context.FILE_SEPARATOR;
         // go one level up (cd ..)
         if (args.equals("..")) {
