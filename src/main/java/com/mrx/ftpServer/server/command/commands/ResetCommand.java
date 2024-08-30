@@ -5,7 +5,7 @@ import com.mrx.ftpServer.server.command.BaseCommand;
 import java.util.Set;
 
 /**
- * Handler for RESET command.
+ * Handler for REST command.
  *
  * @author Mr.X
  * @since 2024/8/29 20:05
@@ -19,6 +19,6 @@ public class ResetCommand extends BaseCommand {
 
     @Override
     protected Set<String> getCommand() {
-        return Set.of("RESET");
+        return Set.of("REST");
     }
 }
