@@ -37,61 +37,34 @@ public class StorCommand extends BaseCommand {
             } else {
                 // Binary mode
                 if (Context.TRANSFER_MODE.get() == TransferType.BINARY) {
-                    BufferedOutputStream fout = null;
-                    BufferedInputStream fin = null;
                     sendMsgToClient("150 Opening binary mode data connection for requested file " + f.getName());
-                    try {
-                        // create streams
-                        fout = new BufferedOutputStream(new FileOutputStream(f));
-                        fin = new BufferedInputStream(dataConnection.getInputStream());
-                    } catch (Exception e) {
-                        logger.debug("Could not create file streams");
-                    }
-                    logger.debug("Start receiving file {}", f.getName());
-                    // write file with buffer
-                    byte[] buf = new byte[1024];
-                    int l = 0;
-                    try {
+                    try (BufferedOutputStream fout = new BufferedOutputStream(new FileOutputStream(f));
+                         BufferedInputStream fin = new BufferedInputStream(dataConnection.getInputStream())
+                    ) {
+                        logger.debug("Start receiving file {}", f.getName());
+                        // write file with buffer
+                        byte[] buf = new byte[1024];
+                        int l;
                         while ((l = fin.read(buf, 0, 1024)) != -1) {
                             fout.write(buf, 0, l);
                         }
-                    } catch (IOException e) {
-                        logger.debug("Could not read from or write to file streams", e);
-                    }
-                    // close streams
-                    try {
-                        fin.close();
-                        fout.close();
-                    } catch (IOException e) {
-                        logger.debug("Could not close file streams", e);
+                    } catch (Exception e) {
+                        logger.error("file transmission failed", e);
                     }
                     logger.debug("Completed receiving file {}", f.getName());
                     sendMsgToClient("226 File transfer successful. Closing data connection.");
-                }
-                // ASCII mode
-                else {
+                } else {
+                    // ASCII mode
                     sendMsgToClient("150 Opening ASCII mode data connection for requested file " + f.getName());
-                    BufferedReader rin = null;
-                    PrintWriter rout = null;
-                    try {
-                        rin = new BufferedReader(new InputStreamReader(dataConnection.getInputStream()));
-                        rout = new PrintWriter(new FileOutputStream(f), true);
-                    } catch (IOException e) {
-                        logger.debug("Could not create file streams");
-                    }
-                    String s;
-                    try {
+                    try (BufferedReader rin = new BufferedReader(new InputStreamReader(dataConnection.getInputStream()));
+                         PrintWriter rout = new PrintWriter(new FileOutputStream(f), true)
+                    ) {
+                        String s;
                         while ((s = rin.readLine()) != null) {
                             rout.println(s);
                         }
                     } catch (IOException e) {
-                        logger.debug("Could not read from or write to file streams", e);
-                    }
-                    try {
-                        rout.close();
-                        rin.close();
-                    } catch (IOException e) {
-                        logger.debug("Could not close file streams", e);
+                        logger.debug("Could not create file streams");
                     }
                     sendMsgToClient("226 File transfer successful. Closing data connection.");
                 }

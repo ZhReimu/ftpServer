@@ -35,62 +35,34 @@ public class RetrCommand extends BaseCommand {
         } else {
             // Binary mode
             if (Context.TRANSFER_MODE.get() == TransferType.BINARY) {
-                BufferedOutputStream fout = null;
-                BufferedInputStream fin = null;
                 sendMsgToClient("150 Opening binary mode data connection for requested file " + f.getName());
-                try {
-                    // create streams
-                    fout = new BufferedOutputStream(dataConnection.getOutputStream());
-                    fin = new BufferedInputStream(new FileInputStream(f));
-                } catch (Exception e) {
-                    logger.debug("Could not create file streams");
-                }
-                logger.debug("Starting file transmission of {}", f.getName());
-                // write file with buffer
-                byte[] buf = new byte[1024];
-                int l = 0;
-                try {
+                try (BufferedInputStream fin = new BufferedInputStream(new FileInputStream(f));
+                     OutputStream fout = new BufferedOutputStream(dataConnection.getOutputStream())
+                ) {
+                    logger.debug("Starting file transmission of {}", f.getName());
+                    // write file with buffer
+                    byte[] buf = new byte[1024];
+                    int l;
                     while ((l = fin.read(buf, 0, 1024)) != -1) {
                         fout.write(buf, 0, l);
                     }
-                } catch (IOException e) {
-                    logger.debug("Could not read from or write to file streams", e);
-                }
-                // close streams
-                try {
-                    fin.close();
-                    fout.close();
-                } catch (IOException e) {
-                    logger.debug("Could not close file streams", e);
+                } catch (Exception e) {
+                    logger.debug("file transmission failed", e);
                 }
                 logger.debug("Completed file transmission of {}", f.getName());
                 sendMsgToClient("226 File transfer successful. Closing data connection.");
-            }
-
-            // ASCII mode
-            else {
+            } else {
+                // ASCII mode
                 sendMsgToClient("150 Opening ASCII mode data connection for requested file " + f.getName());
-                BufferedReader rin = null;
-                PrintWriter rout = null;
-                try {
-                    rin = new BufferedReader(new FileReader(f));
-                    rout = new PrintWriter(dataConnection.getOutputStream(), true);
-                } catch (IOException e) {
-                    logger.debug("Could not create file streams");
-                }
-                String s;
-                try {
+                try (BufferedReader rin = new BufferedReader(new FileReader(f));
+                     PrintWriter rout = new PrintWriter(dataConnection.getOutputStream(), true)
+                ) {
+                    String s;
                     while ((s = rin.readLine()) != null) {
                         rout.println(s);
                     }
                 } catch (IOException e) {
-                    logger.debug("Could not read from or write to file streams", e);
-                }
-                try {
-                    rout.close();
-                    rin.close();
-                } catch (IOException e) {
-                    logger.debug("Could not close file streams", e);
+                    logger.error("file transmission failed", e);
                 }
                 sendMsgToClient("226 File transfer successful. Closing data connection.");
             }
