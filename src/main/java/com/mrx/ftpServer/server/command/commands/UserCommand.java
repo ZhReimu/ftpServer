@@ -19,6 +19,9 @@ public class UserCommand extends BaseCommand {
     public void execute0(String username) {
         for (User user : userService.loadUsers()) {
             if (username.toLowerCase().equals(user.getUsername())) {
+                Context.USER.set(user);
+                Thread thread = Thread.currentThread();
+                thread.setName(thread.getName().replace("worker", user.getUsername()));
                 if (user.getPassword() == null) {
                     Context.USER_STATUS.set(UserStatus.LOGGED_IN);
                     sendMsgToClient("230-Welcome to HKUST");
@@ -27,7 +30,6 @@ public class UserCommand extends BaseCommand {
                 }
                 sendMsgToClient("331 User name okay, need password");
                 Context.put(Context.USER_STATUS, UserStatus.ENTERED_USERNAME);
-                Context.USER.set(user);
                 return;
             }
         }
@@ -42,4 +44,5 @@ public class UserCommand extends BaseCommand {
     protected Set<String> getCommand() {
         return Set.of("USER");
     }
+
 }
