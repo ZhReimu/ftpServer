@@ -111,6 +111,7 @@ public class Worker implements Runnable {
             sendMsgToClient("425 No data connection was established");
             logger.debug("Cannot send message, because no data connection is established");
         } else {
+            logger.debug("send data msg: \n{}", msg);
             dataOutWriter.print(msg + '\r' + '\n');
         }
 

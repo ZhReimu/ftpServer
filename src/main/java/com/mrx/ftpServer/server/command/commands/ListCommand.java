@@ -50,7 +50,7 @@ public class ListCommand extends BaseCommand {
      * is that of a file, then return an array containing only one element
      * (this name). If the file or directory does not exist, return nul.
      */
-    private String[] nlstHelper(String args) {
+    protected String[] nlstHelper(String args) {
         // Construct the name of the directory to list.
         String filename = Context.CURRENT_DIR.get();
         if (args != null) {
