@@ -17,8 +17,24 @@ public class FeatCommand extends BaseCommand {
 
     @Override
     public void execute0(String args) {
-        sendMsgToClient("211-Extensions supported:");
-        sendMsgToClient("211 END");
+        sendMsgToClient("""
+                211-Extensions supported:
+                 HOST
+                 SIZE
+                 REST STREAM
+                 MDTM
+                 MDTM YYYYMMDDHHMMSS[+-TZ] filename
+                 MLST size*;type*;perm*;create*;modify*;
+                 MFMT
+                 MD5
+                 XCRC "filename" start end
+                 XMD5 "filename" start end
+                 CLNT
+                 SITE INDEX;ZONE;CMLSD;DMLSD
+                 XCMLSD
+                 XDMLSD
+                211 END
+                """);
     }
 
     @Override
