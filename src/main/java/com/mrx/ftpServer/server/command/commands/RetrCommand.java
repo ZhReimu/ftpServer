@@ -29,7 +29,7 @@ public class RetrCommand extends BaseCommand {
         String currDirectory = Context.CURRENT_DIR.get();
         String fileSeparator = Context.FILE_SEPARATOR.get();
         Socket dataConnection = worker.getDataConnection();
-        File f = new File(currDirectory + fileSeparator + file);
+        File f = Context.getRelativeFile(currDirectory + fileSeparator + file);
         if (!f.exists()) {
             sendMsgToClient("550 File does not exist");
         } else {
