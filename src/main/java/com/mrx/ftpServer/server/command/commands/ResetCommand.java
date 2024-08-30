@@ -14,7 +14,7 @@ public class ResetCommand extends BaseCommand {
 
     @Override
     public void execute0(String args) {
-        sendMsgToClient("200 OK.");
+        sendMsgToClient("350 REST supported. Ready to resume at byte offset %s.".formatted(args));
     }
 
     @Override
