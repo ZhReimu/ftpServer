@@ -60,7 +60,7 @@ public class MlsdCommand extends ListCommand {
 
     private enum Type {
         /**
-         * child dir
+         * current dir
          */
         cdir,
         /**
@@ -70,11 +70,16 @@ public class MlsdCommand extends ListCommand {
         /**
          * file
          */
-        file;
+        file,
+        /**
+         * dir
+         */
+        dir,
+        ;
 
         public static Type valueOf(File f) {
-            // TODO: show parent dir
-            return f.isDirectory() ? cdir : file;
+            // TODO: show parent dir and current dir
+            return f.isDirectory() ? dir : file;
         }
     }
 

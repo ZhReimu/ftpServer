@@ -77,6 +77,10 @@ public enum Context {
         return String.valueOf((Object) get());
     }
 
+    public File getAsFile() {
+        return new File(getAsString());
+    }
+
     public void set(Object value) {
         Context.put(this, value);
     }

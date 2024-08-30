@@ -62,11 +62,9 @@ public class ListCommand extends BaseCommand {
         if (f.exists() && f.isDirectory()) {
             return f.list();
         } else if (f.exists() && f.isFile()) {
-            String[] allFiles = new String[1];
-            allFiles[0] = f.getName();
-            return allFiles;
+            return new String[]{f.getName()};
         } else {
-            return null;
+            return new String[]{};
         }
     }
 
