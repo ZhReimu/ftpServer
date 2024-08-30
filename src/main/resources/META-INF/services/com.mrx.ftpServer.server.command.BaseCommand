@@ -22,3 +22,4 @@ com.mrx.ftpServer.server.command.commands.RnfrCommand
 com.mrx.ftpServer.server.command.commands.NoopCommand
 com.mrx.ftpServer.server.command.commands.AppeCommand
 com.mrx.ftpServer.server.command.commands.RntoCommand
+com.mrx.ftpServer.server.command.commands.ClntCommand

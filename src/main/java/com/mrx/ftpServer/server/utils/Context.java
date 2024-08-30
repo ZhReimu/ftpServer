@@ -50,6 +50,10 @@ public enum Context {
      * current file
      */
     CURRENT_FILE,
+    /**
+     * current client
+     */
+    CURRENT_CLIENT,
     ;
 
     private static final ThreadLocal<Map<Context, Object>> context = new ThreadLocal<>();
