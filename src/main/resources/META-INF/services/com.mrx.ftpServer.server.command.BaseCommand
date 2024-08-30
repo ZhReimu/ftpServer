@@ -25,3 +25,5 @@ com.mrx.ftpServer.server.command.commands.RntoCommand
 com.mrx.ftpServer.server.command.commands.ClntCommand
 com.mrx.ftpServer.server.command.commands.MlsdCommand
 com.mrx.ftpServer.server.command.commands.DeleCommand
+com.mrx.ftpServer.server.command.commands.Xmd5Command
+com.mrx.ftpServer.server.command.commands.XcrcCommand
