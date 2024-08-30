@@ -15,27 +15,31 @@ import java.util.Set;
 public class CwdCommand extends BaseCommand {
 
     @Override
-    public void execute0(String args) {
+    public void execute0(String newDir) {
+        String fileSeparator = Context.FILE_SEPARATOR.get();
+        if (newDir.endsWith(fileSeparator)) {
+            newDir = newDir.substring(0, newDir.length() - 1);
+        }
         String filename = Context.CURRENT_DIR.get();
+        logger.debug("currentDir: {}", filename);
         // fix windows explorer bug
-        if (filename.equals(args)) {
+        if (filename.equals(newDir)) {
             sendMsgToClient("250 The current directory has been changed to " + filename);
             return;
         }
-        Context fileSeparator = Context.FILE_SEPARATOR;
         // go one level up (cd ..)
-        if (args.equals("..")) {
-            int ind = filename.lastIndexOf(fileSeparator.get());
+        if (newDir.equals("..")) {
+            int ind = filename.lastIndexOf(fileSeparator);
             if (ind > 0) {
                 filename = filename.substring(0, ind);
             }
         }
         // if argument is anything else (cd . does nothing)
-        else if (!args.equals(".")) {
-            filename = filename + fileSeparator.get() + args;
+        else if (!newDir.equals(".")) {
+            filename = filename + fileSeparator + newDir;
         }
         // check if file exists, is directory and is not above root directory
-        File f = new File(filename);
+        File f = Context.getRelativeFile(filename);
         if (f.exists() && f.isDirectory() && (filename.length() >= Context.ROOT.getAsString().length())) {
             Context.CURRENT_DIR.set(filename);
             sendMsgToClient("250 The current directory has been changed to " + filename);

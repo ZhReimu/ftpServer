@@ -3,7 +3,6 @@ package com.mrx.ftpServer.server.command.commands;
 import com.mrx.ftpServer.server.command.BaseCommand;
 import com.mrx.ftpServer.server.utils.Context;
 
-import java.io.File;
 import java.util.Set;
 
 /**
@@ -15,10 +14,14 @@ import java.util.Set;
 public class RntoCommand extends BaseCommand {
 
     @Override
-    public void execute0(String args) {
+    public void execute0(String newFileName) {
+        // windows explorer will only give fileName, such as test.txt, but others will give full path, such as /test/test.txt
+        String currentDir = Context.CURRENT_DIR.getAsString();
+        if (!newFileName.contains(currentDir)) {
+            newFileName = currentDir + Context.FILE_SEPARATOR.get() + newFileName;
+        }
         String oldFileName = Context.CURRENT_FILE.getAsString();
-        String newFileName = Context.CURRENT_DIR.getAsString() + Context.FILE_SEPARATOR.getAsString() + args;
-        if (new File(oldFileName).renameTo(new File(newFileName))) {
+        if (Context.getRelativeFile(oldFileName).renameTo(Context.getRelativeFile(newFileName))) {
             sendMsgToClient("250 rename successful");
         } else {
             sendMsgToClient("553 rename failed");

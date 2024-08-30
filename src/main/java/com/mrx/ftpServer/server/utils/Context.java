@@ -3,6 +3,7 @@ package com.mrx.ftpServer.server.utils;
 import com.mrx.ftpServer.server.enums.TransferType;
 import com.mrx.ftpServer.server.enums.UserStatus;
 
+import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -56,7 +57,7 @@ public enum Context {
     public static void init() {
         // Path information
         Context.FILE_SEPARATOR.set("/");
-        Context.CURRENT_DIR.set("./data/test");
+        Context.CURRENT_DIR.set("/test");
         Context.ROOT.set("./data");
         Context.TRANSFER_MODE.set(TransferType.ASCII);
         // user properly logged in?
@@ -83,6 +84,10 @@ public enum Context {
     @SuppressWarnings("unchecked")
     public static <T> T get(Context key) {
         return (T) getContext().get(key);
+    }
+
+    public static File getRelativeFile(String currentDir) {
+        return new File(ROOT.getAsString() + currentDir);
     }
 
     public static void clear() {

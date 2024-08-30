@@ -58,7 +58,7 @@ public class ListCommand extends BaseCommand {
         }
         // Now get a File object, and see if the name we got exists and is a
         // directory.
-        File f = new File(filename);
+        File f = Context.getRelativeFile(filename);
         if (f.exists() && f.isDirectory()) {
             return f.list();
         } else if (f.exists() && f.isFile()) {

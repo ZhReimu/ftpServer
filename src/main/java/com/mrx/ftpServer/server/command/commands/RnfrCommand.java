@@ -3,7 +3,6 @@ package com.mrx.ftpServer.server.command.commands;
 import com.mrx.ftpServer.server.command.BaseCommand;
 import com.mrx.ftpServer.server.utils.Context;
 
-import java.io.File;
 import java.util.Set;
 
 /**
@@ -16,12 +15,16 @@ public class RnfrCommand extends BaseCommand {
 
     @Override
     public void execute0(String args) {
-        String fileName = Context.CURRENT_DIR.getAsString() + Context.FILE_SEPARATOR.getAsString() + args;
-        if (!new File(fileName).exists()) {
+        // windows explorer will only give fileName, such as test.txt, but others will give full path, such as /test/test.txt
+        String currentDir = Context.CURRENT_DIR.getAsString();
+        if (!args.contains(currentDir)) {
+            args = currentDir + Context.FILE_SEPARATOR.get() + args;
+        }
+        if (!Context.getRelativeFile(args).exists()) {
             sendMsgToClient("550 file not exists");
             return;
         }
-        Context.CURRENT_FILE.set(fileName);
+        Context.CURRENT_FILE.set(args);
         sendMsgToClient("350 Filename noted, now send RNTO");
     }
 
