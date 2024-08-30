@@ -45,6 +45,10 @@ public enum Context {
      * current command
      */
     CURRENT_COMMAND,
+    /**
+     * current file
+     */
+    CURRENT_FILE,
     ;
 
     private static final ThreadLocal<Map<Context, Object>> context = new ThreadLocal<>();
